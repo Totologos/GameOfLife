@@ -139,7 +139,7 @@ namespace GameOfLife
                     // all cells are dead or not evolutate  
                     int i = r.Next(0, width);
                     int j = r.Next(0, height);
-                    if (population < 10 || generationWithGod > 100)
+                    if (population < 10 || generationWithGod > 150 || r.Next(0,50) == 2)
                     {
                         if( Cell.AddSprite(sprites[ r.Next(0, sprites.Count) ], i, j, gameBoardCells) == false)
                         {
