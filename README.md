@@ -4,3 +4,5 @@ It is developped in c# only for fun!
 Advantage :
 - Used a double buffer to suppess blink effect
 - Application detects the end of game board evolution. In this case, an random cell or a sprite is added on the game board until the evolution resumes
+
+![game of life screenshot](https://github.com/Totologos/GameOfLife/blob/master/window_snipping.PNG)
