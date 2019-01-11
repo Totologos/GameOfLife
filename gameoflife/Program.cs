@@ -85,32 +85,45 @@ namespace GameOfLife
             Cell.AddSprite(clown, width / 2, height / 2, gameBoardCells);
 
             // Configure console with double buffer
-
             Console.SetWindowSize(Math.Max(width + 3, 60), height + 4);
-            ConsoleDoubleBuffer consoleBuffer = new ConsoleDoubleBuffer(Console.WindowWidth, Console.WindowHeight, Console.WindowWidth, Console.WindowHeight);
-            Console.SetBufferSize(Console.WindowWidth, Console.WindowHeight);
-            Console.CursorVisible = false;            
 
-            // Display borders
-            for (int i = 0; i < width+3; i++)
-            {
-                consoleBuffer.Draw("*", i, 1 , 2);
-                consoleBuffer.Draw("*", i, height+2, 2);
-            }
+            ConsoleDoubleBuffer consoleBuffer = null;
 
-            for (int i = 2; i < height+3; i++)
-            {
-                consoleBuffer.Draw("*", 0, i, 2);
-                consoleBuffer.Draw("*", width+2, i, 2);
-            }
 
             // Infinity loop...
             int generation = 1;
             int generationWithGod = 0;
             EndOfEvolutionDetection endOfEvolutionDetection = new EndOfEvolutionDetection();
             Random r = new Random();
+
+            int consoleSizeChangedPrev = 0;
+
             while (true)
             {
+                int w = Console.WindowWidth;
+                int h = Console.WindowHeight;
+                if ( (w ^ h) != consoleSizeChangedPrev)
+                {
+
+                    consoleSizeChangedPrev = (w ^ h);
+                    Console.Clear();
+                    Console.CursorVisible = false;
+                    consoleBuffer = new ConsoleDoubleBuffer(Math.Max(w, width + 3), Math.Max(h, height + 3));
+
+                    // Display borders
+                    for (int i = 0; i < width + 3; i++)
+                    {
+                        consoleBuffer.Draw("*", i, 1, 2);
+                        consoleBuffer.Draw("*", i, height + 2, 2);
+                    }
+
+                    for (int i = 2; i < height + 3; i++)
+                    {
+                        consoleBuffer.Draw("*", 0, i, 2);
+                        consoleBuffer.Draw("*", width + 2, i, 2);
+                    }
+                }
+
                 Thread.Sleep(50);
                 int population = 0;
                 string cellsString = "";

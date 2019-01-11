@@ -91,12 +91,27 @@ namespace DoubleBuffer
             }
         }
 
+
+        /// <summary>
+        /// Consctructor class for the buffer. Pass in the width and height you want the buffer to be.
+        /// </summary>
+        /// <param name="Width"></param>
+        /// <param name="Height"></param>
+        public ConsoleDoubleBuffer(int Width, int Height)
+        {
+            SetupBuffer(Width, Height, Width, Height);
+        }
         /// <summary>
         /// Consctructor class for the buffer. Pass in the width and height you want the buffer to be.
         /// </summary>
         /// <param name="Width"></param>
         /// <param name="Height"></param>
         public ConsoleDoubleBuffer(int Width, int Height, int wWidth, int wHeight) // Create and fill in a multideminsional list with blank spaces.
+        {
+            SetupBuffer(Width, Height, wWidth, wHeight);
+        }
+
+        private void SetupBuffer(int Width, int Height, int wWidth, int wHeight) // Create and fill in a multideminsional list with blank spaces.
         {
             if (Width > wWidth || Height > wHeight)
             {
@@ -113,16 +128,16 @@ namespace DoubleBuffer
             rect.setWindowSize((short)windowWidth, (short)windowHeight);
             Clear();
         }
-        /// <summary>
-        /// This method draws any text to the buffer with given color.
-        /// To chance the color, pass in a value above 0. (0 being black text, 15 being white text).
-        /// Put in the starting width and height you want the input string to be.
-        /// </summary>
-        /// <param name="str"></param>
-        /// <param name="Width"></param>
-        /// <param name="Height"></param>
-        /// <param name="attribute"></param>
-        public void Draw(String str, int Width, int Height, short attribute) //Draws the image to the buffer
+            /// <summary>
+            /// This method draws any text to the buffer with given color.
+            /// To chance the color, pass in a value above 0. (0 being black text, 15 being white text).
+            /// Put in the starting width and height you want the input string to be.
+            /// </summary>
+            /// <param name="str"></param>
+            /// <param name="Width"></param>
+            /// <param name="Height"></param>
+            /// <param name="attribute"></param>
+            public void Draw(String str, int Width, int Height, short attribute) //Draws the image to the buffer
         {
             if (Width > windowWidth - 1 || Height > windowHeight - 1)
             {
