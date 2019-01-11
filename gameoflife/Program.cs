@@ -4,19 +4,28 @@ using System.Security.Cryptography;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
+using System.Timers;
 using DoubleBuffer;
 
 namespace GameOfLife
 {
     class Program
     {
+        private static int consoleSizeChangedPrev = 0;
+        private static int generation = 1;
+        private static int generationWithGod = 0;
+        private static int width = 100;
+        private static int height = 50;
+        private static Cell[,] gameBoardCells;
+        private static ConsoleDoubleBuffer consoleBuffer = null;
+        private static EndOfEvolutionDetection endOfEvolutionDetection = new EndOfEvolutionDetection();
+        private static List<List<Cell>> sprites;
+        private static Random r = new Random();
+        private static System.Timers.Timer aTimer = new System.Timers.Timer();
+
         static void Main(string[] args)
         {
-
-            int width = 100;
-            int height = 50;
-
-            Cell[,] gameBoardCells = new Cell[width, height];
+            gameBoardCells = new Cell[width, height];
             Cell.SetGameBoardSize(width, height);
 
             // Init all cells of game board
@@ -74,7 +83,7 @@ namespace GameOfLife
                 new Cell( 1 , 2)
             };
 
-            List<List<Cell>> sprites = new List<List<Cell>>()
+            sprites = new List<List<Cell>>()
             {
                 clown,
                 clown2,
@@ -82,108 +91,110 @@ namespace GameOfLife
                 flower
             };
 
-            Cell.AddSprite(clown, width / 2, height / 2, gameBoardCells);
 
-            // Configure console with double buffer
+
+            Cell.AddSprite(clown, width / 2, height / 2, gameBoardCells);
             Console.SetWindowSize(Math.Max(width + 3, 60), height + 4);
 
-            ConsoleDoubleBuffer consoleBuffer = null;
+            
+            aTimer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
+            aTimer.Interval = 50;
+            aTimer.Enabled = true;
+            aTimer.AutoReset = false;
 
+            Console.ReadKey();
+        }
 
-            // Infinity loop...
-            int generation = 1;
-            int generationWithGod = 0;
-            EndOfEvolutionDetection endOfEvolutionDetection = new EndOfEvolutionDetection();
-            Random r = new Random();
-
-            int consoleSizeChangedPrev = 0;
-
-            while (true)
+        // Specify what you want to happen when the Elapsed event is raised.
+        private static void OnTimedEvent(object source, ElapsedEventArgs e)
+        {
+           
+            int w = Console.WindowWidth;
+            int h = Console.WindowHeight;
+            if ( (w ^ h) != consoleSizeChangedPrev) // check if the console windows size was resized
             {
-                int w = Console.WindowWidth;
-                int h = Console.WindowHeight;
-                if ( (w ^ h) != consoleSizeChangedPrev)
+                consoleSizeChangedPrev = (w ^ h);
+                Console.Clear();
+                Console.CursorVisible = false;
+                consoleBuffer = new ConsoleDoubleBuffer(Math.Max(w, width + 3), Math.Max(h, height + 3));
+
+                // Display borders
+                for (int i = 0; i < width + 3; i++)
                 {
-
-                    consoleSizeChangedPrev = (w ^ h);
-                    Console.Clear();
-                    Console.CursorVisible = false;
-                    consoleBuffer = new ConsoleDoubleBuffer(Math.Max(w, width + 3), Math.Max(h, height + 3));
-
-                    // Display borders
-                    for (int i = 0; i < width + 3; i++)
-                    {
-                        consoleBuffer.Draw("*", i, 1, 2);
-                        consoleBuffer.Draw("*", i, height + 2, 2);
-                    }
-
-                    for (int i = 2; i < height + 3; i++)
-                    {
-                        consoleBuffer.Draw("*", 0, i, 2);
-                        consoleBuffer.Draw("*", width + 2, i, 2);
-                    }
+                    consoleBuffer.Draw("*", i, 1, 2);
+                    consoleBuffer.Draw("*", i, height + 2, 2);
                 }
 
-                Thread.Sleep(50);
-                int population = 0;
-                string cellsString = "";
-                foreach (Cell c in gameBoardCells)
+                for (int i = 2; i < height + 3; i++)
                 {
-                    c.Update();
-                    string s = " ";
-                    if( c.IsAlive() == true )
-                    {
-                        s = "#";
-                        population++;
-                    }
+                    consoleBuffer.Draw("*", 0, i, 2);
+                    consoleBuffer.Draw("*", width + 2, i, 2);
+                }
+                consoleBuffer.Draw("Press any key to quit.", 0, height + 3, 15);
+            }
 
-                    consoleBuffer.Draw(s, c.PosX + 1, c.PosY + 2, 15);
-                    cellsString += s;
+            Thread.Sleep(50); // sleep
+            int population = 0;
+            string cellsString = "";
+            foreach (Cell c in gameBoardCells)
+            {
+                c.Update();
+                string s = " ";
+                if( c.IsAlive() == true )
+                {
+                    s = "#";
+                    population++;
                 }
 
-                // Check if it it is the end of cycle
+                consoleBuffer.Draw(s, c.PosX + 1, c.PosY + 2, 15);
+                cellsString += s;
+            }
 
-                endOfEvolutionDetection.AddCycle(cellsString);
-                bool needGod = (population == 0 || endOfEvolutionDetection.EvolutionEnding() == true);
+            // Check if it it is the end of cycle
 
-                if ( needGod == true )
+            endOfEvolutionDetection.AddCycle(cellsString);
+            bool needGod = (population == 0 || endOfEvolutionDetection.EvolutionEnding() == true);
+
+            if ( needGod == true )
+            {
+                generationWithGod++;
+                // all cells are dead or not evolutate  
+                int i = r.Next(0, width);
+                int j = r.Next(0, height);
+                if (population < 10 || generationWithGod > 150 || r.Next(0,50) == 2)
                 {
-                    generationWithGod++;
-                    // all cells are dead or not evolutate  
-                    int i = r.Next(0, width);
-                    int j = r.Next(0, height);
-                    if (population < 10 || generationWithGod > 150 || r.Next(0,50) == 2)
+                    if( Cell.AddSprite(sprites[ r.Next(0, sprites.Count) ], i, j, gameBoardCells) == false)
                     {
-                        if( Cell.AddSprite(sprites[ r.Next(0, sprites.Count) ], i, j, gameBoardCells) == false)
-                        {
-                            endOfEvolutionDetection.ClearHistory();
-                        }
-                    }
-                    else
-                    {
-                        gameBoardCells[i, j].Reborn();
+                        endOfEvolutionDetection.ClearHistory();
                     }
                 }
                 else
                 {
-                    generationWithGod = 0;
+                    gameBoardCells[i, j].Reborn();
                 }
-
-                consoleBuffer.Draw( String.Format("  generation: {0}   population: {1:0000}  {2} ", 
-                                                    generation++, 
-                                                    population, 
-                                                    needGod ? String.Format("God in action ({0})", generationWithGod) : "                       " ), 
-                                    0, 0, 15);
-
-                consoleBuffer.Print();
-                
-                foreach(Cell c in gameBoardCells)
-                {
-                    c.Cycle(gameBoardCells);
-                }                
+            }
+            else
+            {
+                generationWithGod = 0;
             }
 
+            consoleBuffer.Draw( String.Format("  generation: {0}   population: {1:0000}  {2} ", 
+                                                generation++, 
+                                                population, 
+                                                needGod ? String.Format("God in action ({0})", generationWithGod) : "                       " ), 
+                                0, 0, 15);
+
+            consoleBuffer.Print();
+                
+            foreach(Cell c in gameBoardCells)
+            {
+                c.Cycle(gameBoardCells);
+            }
+
+            aTimer.Enabled = true;
         }
+
+        
     }
     class Cell
     {
